@@ -15,6 +15,7 @@ import { WindowContextProvider } from './contexts/window.context';
 import ComplianceUserScreen from './screens/compliance-user.screen';
 import ErrorScreen from './screens/error.screen';
 import HomeScreen from './screens/home.screen';
+import RealUnitUserScreen from './screens/realunit-user.screen';
 import { setupLanguages } from './translations';
 
 const SellScreen = lazy(() => import('./screens/sell.screen'));
@@ -53,6 +54,7 @@ const EditMailScreen = lazy(() => import('./screens/edit-mail.screen'));
 const SafeScreen = lazy(() => import('./screens/safe.screen'));
 const TelegramSupportScreen = lazy(() => import('./screens/telegram-support.screen'));
 const ComplianceScreen = lazy(() => import('./screens/compliance.screen'));
+const RealUnitScreen = lazy(() => import('./screens/realunit-user.screen'));
 
 setupLanguages();
 
@@ -303,6 +305,14 @@ export const Routes = [
       {
         path: 'compliance/user/:id',
         element: withSuspense(<ComplianceUserScreen />),
+      },
+      {
+        path: 'realunit',
+        element: withSuspense(<RealUnitScreen />),
+      },
+      {
+        path: 'realunit/user/:id',
+        element: withSuspense(<RealUnitUserScreen />),
       },
     ],
   },
