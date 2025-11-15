@@ -42,6 +42,16 @@ export function SafeCompletion({ type, onClose }: SafeCompletionProps): JSX.Elem
           'screens/safe',
           'Your incoming transaction will be processed and added to your Safe portfolio. We will inform you by email about the progress of your transactions.',
         );
+      case SafeOperationType.SEND:
+        return translate(
+          'screens/safe',
+          'Your send transaction will be processed and assets will be transferred from your Safe. We will inform you by email about the progress of your transactions.',
+        );
+      case SafeOperationType.WITHDRAW:
+        return translate(
+          'screens/safe',
+          'Your withdrawal will be processed and funds will be transferred to your bank account. We will inform you by email about the progress of your transactions.',
+        );
       case SafeOperationType.SWAP:
         return translate(
           'screens/safe',

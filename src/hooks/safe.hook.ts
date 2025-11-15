@@ -19,8 +19,10 @@ import { OrderFormData } from './order.hook';
 
 enum CustodyOrderType {
   DEPOSIT = 'Deposit',
+  WITHDRAWAL = 'Withdrawal',
   RECEIVE = 'Receive',
   SWAP = 'Swap',
+  SEND = 'Send',
 }
 
 const DEPOSIT_PAIRS: Record<string, string> = {
@@ -40,13 +42,19 @@ export interface UseSafeResult {
   availableCurrencies?: Fiat[];
   availableAssets?: CustodyAsset[];
   receiveableAssets?: Asset[];
+  sendableAssets?: Asset[];
+  withdrawableAssets?: Asset[];
   swappableSourceAssets?: Asset[];
   swappableTargetAssets?: Asset[];
   fetchPaymentInfo: (data: OrderFormData) => Promise<OrderPaymentInfo>;
   fetchReceiveInfo: (data: OrderFormData) => Promise<OrderPaymentInfo>;
+  fetchSendInfo: (data: OrderFormData) => Promise<OrderPaymentInfo>;
+  fetchWithdrawInfo: (data: OrderFormData) => Promise<OrderPaymentInfo>;
   fetchSwapInfo: (data: OrderFormData) => Promise<OrderPaymentInfo>;
   confirmPayment: () => Promise<void>;
   confirmReceive: () => Promise<void>;
+  confirmSend: () => Promise<void>;
+  confirmWithdraw: () => Promise<void>;
   confirmSwap: () => Promise<void>;
   pairMap: (asset: string) => Asset | undefined;
 }
@@ -133,11 +141,15 @@ export function useSafe(): UseSafeResult {
       : [];
   }, [getAssets, custodyBlockchains]);
 
-  const swappableSourceAssets = useMemo(() => {
+  const ownedAssets = useMemo(() => {
     const sourceAssets =
       custodyBlockchains.length > 0 ? getAssets(custodyBlockchains, { sellable: true, comingSoon: false }) : [];
     return sourceAssets.filter((a) => portfolio.balances.find((b) => b.asset.name === a.name && b.balance > 0));
   }, [getAssets, custodyBlockchains, portfolio.balances]);
+
+  const sendableAssets = ownedAssets;
+  const withdrawableAssets = ownedAssets;
+  const swappableSourceAssets = ownedAssets;
 
   const swappableTargetAssets = useMemo(() => {
     return custodyBlockchains.length > 0 ? getAssets(custodyBlockchains, { buyable: true, comingSoon: false }) : [];
@@ -225,6 +237,45 @@ export function useSafe(): UseSafeResult {
     return order;
   }
 
+  async function fetchSendInfo(data: OrderFormData): Promise<OrderPaymentInfo> {
+    const asset = data.sourceAsset as Asset;
+    const order = await call<OrderPaymentInfo>({
+      url: 'custody/order',
+      method: 'POST',
+      data: {
+        type: CustodyOrderType.SEND,
+        sourceAsset: asset.name,
+        targetAsset: asset.name,
+        sourceAmount: Number(data.sourceAmount),
+        targetAddress: data.address as any,
+        targetBlockchain: asset.blockchain,
+      },
+      token: tokenStore.get('custody'),
+    });
+
+    currentOrderId.current = order.orderId;
+    return order;
+  }
+
+  async function fetchWithdrawInfo(data: OrderFormData): Promise<OrderPaymentInfo> {
+    const order = await call<OrderPaymentInfo>({
+      url: 'custody/order',
+      method: 'POST',
+      data: {
+        type: CustodyOrderType.WITHDRAWAL,
+        sourceAsset: data.sourceAsset.name,
+        targetAsset: data.targetAsset.name,
+        sourceAmount: Number(data.sourceAmount),
+        targetAmount: Number(data.targetAmount),
+        targetIban: data.bankAccount?.iban,
+      },
+      token: tokenStore.get('custody'),
+    });
+
+    currentOrderId.current = order.orderId;
+    return order;
+  }
+
   async function confirmPayment(): Promise<void> {
     if (!currentOrderId.current) return;
 
@@ -236,6 +287,14 @@ export function useSafe(): UseSafeResult {
   }
 
   async function confirmReceive(): Promise<void> {
+    return confirmPayment();
+  }
+
+  async function confirmSend(): Promise<void> {
+    return confirmPayment();
+  }
+
+  async function confirmWithdraw(): Promise<void> {
     return confirmPayment();
   }
 
@@ -256,13 +315,19 @@ export function useSafe(): UseSafeResult {
       availableCurrencies,
       availableAssets,
       receiveableAssets,
+      sendableAssets,
+      withdrawableAssets,
       swappableSourceAssets,
       swappableTargetAssets,
       fetchPaymentInfo,
       fetchReceiveInfo,
+      fetchSendInfo,
+      fetchWithdrawInfo,
       fetchSwapInfo,
       confirmPayment,
       confirmReceive,
+      confirmSend,
+      confirmWithdraw,
       confirmSwap,
       pairMap,
     }),
@@ -278,7 +343,7 @@ export function useSafe(): UseSafeResult {
       availableCurrencies,
       availableAssets,
       receiveableAssets,
-      swappableSourceAssets,
+      ownedAssets,
       swappableTargetAssets,
       pairMap,
     ],
