@@ -31,6 +31,8 @@ export enum OrderType {
   SELL = 'sell',
   SWAP = 'swap',
   DEPOSIT = 'deposit',
+  RECEIVE = 'receive',
+  SEND = 'send',
 }
 
 export enum Side {
@@ -73,6 +75,7 @@ export interface UseOrderResult {
   isBuy: boolean;
   isSell?: boolean;
   isSwap?: boolean;
+  isSend?: boolean;
   sourceAssets?: Asset[] | Fiat[];
   targetAssets?: Asset[] | Fiat[];
   addressItems: Address[];
@@ -115,9 +118,10 @@ export function useOrder({ orderType, sourceAssets, targetAssets }: UseOrderPara
   const lastEditedFieldRef = useRef<Side>(Side.SOURCE);
   const lastFetchedDataRef = useRef<OrderFormData | null>(null);
 
-  const isBuy = useMemo(() => [OrderType.BUY, OrderType.DEPOSIT].includes(orderType), [orderType]);
+  const isBuy = useMemo(() => [OrderType.BUY, OrderType.DEPOSIT, OrderType.RECEIVE].includes(orderType), [orderType]);
   const isSell = useMemo(() => orderType === OrderType.SELL, [orderType]);
   const isSwap = useMemo(() => orderType === OrderType.SWAP, [orderType]);
+  const isSend = useMemo(() => orderType === OrderType.SEND, [orderType]);
 
   // TODO (later): Set available source / target assets based on blockchain, availableBlockchains,
   // assets, assetIn, assetOut (from useAppParams) and blockchain from useWalletContext.
@@ -308,6 +312,7 @@ export function useOrder({ orderType, sourceAssets, targetAssets }: UseOrderPara
       isBuy,
       isSell,
       isSwap,
+      isSend,
       sourceAssets,
       targetAssets,
       addressItems,
@@ -327,6 +332,7 @@ export function useOrder({ orderType, sourceAssets, targetAssets }: UseOrderPara
       isBuy,
       isSell,
       isSwap,
+      isSend,
       sourceAssets,
       targetAssets,
       addressItems,

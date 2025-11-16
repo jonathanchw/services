@@ -13,6 +13,7 @@ import {
   StyledButton,
   StyledButtonWidth,
   StyledDropdown,
+  StyledInput,
   StyledVerticalStack,
 } from '@dfx.swiss/react-components';
 import React, { useCallback, useEffect, useMemo } from 'react';
@@ -77,6 +78,7 @@ export const OrderInterface: React.FC<OrderInterfaceProps> = ({
   const {
     isBuy,
     isSell,
+    isSend,
     addressItems,
     cryptoBalances,
     paymentInfo,
@@ -112,19 +114,19 @@ export const OrderInterface: React.FC<OrderInterfaceProps> = ({
   );
 
   useEffect(() => {
-    if (!hideAddressSelection) setSelectedAddress(data.address);
-  }, [data.address, hideAddressSelection]);
+    if (!hideAddressSelection && !isSend) setSelectedAddress(data.address);
+  }, [data.address, hideAddressSelection, isSend, setSelectedAddress]);
 
   useEffect(() => {
     availablePaymentMethods?.length && setValue('paymentMethod', availablePaymentMethods[0]);
   }, [availablePaymentMethods, setValue]);
 
   useEffect(() => {
-    if (!hideAddressSelection && isInitialized && session?.address && addressItems) {
+    if (!hideAddressSelection && !isSend && isInitialized && session?.address && addressItems) {
       const address = addressItems.find((a) => blockchain && a.chain === blockchain) ?? addressItems[0];
       setValue('address', address);
     }
-  }, [hideAddressSelection, isInitialized, session, addressItems, blockchain, setValue]);
+  }, [hideAddressSelection, isSend, isInitialized, session, addressItems, blockchain, setValue]);
 
   useEffect(() => {
     const defaultCurrency = getDefaultCurrency(availableCurrencies) ?? availableCurrencies?.[0];
@@ -150,7 +152,10 @@ export const OrderInterface: React.FC<OrderInterfaceProps> = ({
   const rules = Utils.createRules({
     sourceAmount: Validations.Required,
     sourceAsset: Validations.Required,
+    ...(isSend && { address: Validations.Required }),
   });
+
+  const showAddressInput = !hideTargetSelection && !hideAddressSelection;
 
   return (
     <Form control={control} rules={rules} errors={errors} hasFormElement={false}>
@@ -207,7 +212,16 @@ export const OrderInterface: React.FC<OrderInterfaceProps> = ({
               onAmountChange={() => (lastEditedFieldRef.current = Side.TARGET)}
             />
           ) : null}
-          {!hideTargetSelection && !hideAddressSelection && addressItems?.length ? (
+          {showAddressInput && isSend && (
+            <StyledInput
+              control={control}
+              name="address"
+              label={translate('screens/payment', 'Recipient Address')}
+              placeholder="0x..."
+              full
+            />
+          )}
+          {showAddressInput && !isSend && addressItems?.length && (
             <StyledDropdown<Address>
               control={control}
               rootRef={rootRef}
@@ -218,7 +232,7 @@ export const OrderInterface: React.FC<OrderInterfaceProps> = ({
               full
               forceEnable
             />
-          ) : null}
+          )}
         </div>
         {isSell && (
           <BankAccountSelector

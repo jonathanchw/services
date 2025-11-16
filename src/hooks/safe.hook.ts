@@ -239,6 +239,9 @@ export function useSafe(): UseSafeResult {
 
   async function fetchSendInfo(data: OrderFormData): Promise<OrderPaymentInfo> {
     const asset = data.sourceAsset as Asset;
+
+    const targetAddress = typeof data.address === 'string' ? data.address : '';
+
     const order = await call<OrderPaymentInfo>({
       url: 'custody/order',
       method: 'POST',
@@ -247,7 +250,7 @@ export function useSafe(): UseSafeResult {
         sourceAsset: asset.name,
         targetAsset: asset.name,
         sourceAmount: Number(data.sourceAmount),
-        targetAddress: data.address as any,
+        targetAddress,
         targetBlockchain: asset.blockchain,
       },
       token: tokenStore.get('custody'),

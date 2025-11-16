@@ -13,7 +13,7 @@ enum TransactionMode {
   SWAP = 'swap',
 }
 
-enum DepositType {
+enum TransactionType {
   FIAT = 'fiat',
   CRYPTO = 'crypto',
 }
@@ -21,16 +21,14 @@ enum DepositType {
 export const SafeTransactionInterface = () => {
   const { translate } = useSettingsContext();
   const [mode, setMode] = useState<TransactionMode>(TransactionMode.DEPOSIT);
-  const [depositType, setDepositType] = useState<DepositType>(DepositType.FIAT);
-
-  const showTypeSelector = mode !== TransactionMode.SWAP;
+  const [transactionType, setTransactionType] = useState<TransactionType>(TransactionType.FIAT);
 
   const getInterface = () => {
     if (mode === TransactionMode.SWAP) return <SwapInterface />;
 
-    const isFiat = depositType === DepositType.FIAT;
-    if (mode === TransactionMode.DEPOSIT) return isFiat ? <DepositInterface /> : <ReceiveInterface />;
-    return isFiat ? <WithdrawInterface /> : <SendInterface />;
+    if (mode === TransactionMode.DEPOSIT)
+      return transactionType === TransactionType.FIAT ? <DepositInterface /> : <ReceiveInterface />;
+    return transactionType === TransactionType.FIAT ? <WithdrawInterface /> : <SendInterface />;
   };
 
   return (
@@ -53,15 +51,17 @@ export const SafeTransactionInterface = () => {
           isHeader={true}
         />
       </div>
-      {showTypeSelector && (
+      {mode !== TransactionMode.SWAP && (
         <div className="flex items-center gap-2 mb-4">
           <span className="text-sm text-dfxGray-700">{translate('screens/payment', 'Type')}:</span>
-          <ButtonGroup<DepositType>
-            items={[DepositType.FIAT, DepositType.CRYPTO]}
-            selected={depositType}
-            onClick={setDepositType}
+          <ButtonGroup<TransactionType>
+            items={[TransactionType.FIAT, TransactionType.CRYPTO]}
+            selected={transactionType}
+            onClick={setTransactionType}
             buttonLabel={(type) =>
-              type === DepositType.FIAT ? translate('screens/payment', 'Fiat') : translate('screens/payment', 'Crypto')
+              type === TransactionType.FIAT
+                ? translate('screens/payment', 'Fiat')
+                : translate('screens/payment', 'Crypto')
             }
             size={ButtonGroupSize.SM}
           />
